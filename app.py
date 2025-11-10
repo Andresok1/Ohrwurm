@@ -2,12 +2,15 @@
 import os
 import requests
 from flask import Flask, jsonify, send_from_directory
+from dotenv import load_dotenv
+load_dotenv()
+
 
 app = Flask(__name__)
 
-SPOTIFY_CLIENT_ID = os.environ.get("64f51e964a934cebba73cd24fd432348")
-SPOTIFY_CLIENT_SECRET = os.environ.get("59e3a2e6e51f422094717076908afb4a")
-PLAYLIST_ID = "TU_PLAYLIST_ID_AQUI"  # por ejemplo "37i9dQZF1DXcBWIGoYBM5M"
+SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
+PLAYLIST_ID = os.environ.get("PLAYLIST_ID")
 
 def get_access_token():
     if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
