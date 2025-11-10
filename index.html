@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Song recommendations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #111827;
+      color: #e5e7eb;
+    }
+    .card {
+      padding: 24px;
+      border-radius: 12px;
+      background: #1f2937;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 16px;
+    }
+    .song-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .song-artist {
+      font-size: 1rem;
+      color: #9ca3af;
+      margin-bottom: 16px;
+    }
+    .tags {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-bottom: 16px;
+    }
+    .button-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    button, a.action-link {
+      border: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      text-decoration: none;
+      background: #2563eb;
+      color: white;
+    }
+    button:hover, a.action-link:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+    <div class="card">
+    <h1>Song of the moment</h1>
+    <img id="album-image" src="" alt="Album cover"
+        style="width: 200px; height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; display: none;">
+    <div id="song-title" class="song-title"></div>
+    <div id="song-artist" class="song-artist"></div>
+    <div class="button-row">
+        <button onclick="showRandomSong()">Another song</button>
+        <a id="song-link" class="action-link" href="#" target="_blank" rel="noopener">
+        Open in Spotify
+        </a>
+    </div>
+    </div>
+  </div>
+
+  <script>
+    let songs = [];
+
+    async function loadSongs() {
+        const resp = await fetch("/api/playlist");  // ajusta la URL según dónde tengas el backend
+        songs = await resp.json();
+        showRandomSong();
+    }
+
+    function showRandomSong() {
+        if (!songs || songs.length === 0) {
+        return;
+        }
+        const idx = Math.floor(Math.random() * songs.length);
+        const song = songs[idx];
+
+        document.getElementById("song-title").textContent = song.title;
+        document.getElementById("song-artist").textContent = song.artist;
+
+        const img = document.getElementById("album-image");
+        if (song.album_image) {
+        img.src = song.album_image;
+        img.style.display = "block";
+        } else {
+        img.style.display = "none";
+        }
+
+        const link = document.getElementById("song-link");
+        link.href = song.url;
+    }
+
+    loadSongs();
+  </script>
+</body>
+</html>
