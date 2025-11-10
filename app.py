@@ -1,7 +1,7 @@
 
 import os
 import requests
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 
 app = Flask(__name__)
 
@@ -10,40 +10,56 @@ SPOTIFY_CLIENT_SECRET = os.environ.get("59e3a2e6e51f422094717076908afb4a")
 PLAYLIST_ID = "TU_PLAYLIST_ID_AQUI"  # por ejemplo "37i9dQZF1DXcBWIGoYBM5M"
 
 def get_access_token():
+    if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
+        raise RuntimeError("Spotify client id or secret not set")
+
     url = "https://accounts.spotify.com/api/token"
     data = {"grant_type": "client_credentials"}
     resp = requests.post(url, data=data, auth=(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET))
-    resp.raise_for_status()
-    return resp.json()["access_token"]
+    token_data = resp.json()
+    return token_data["access_token"]
 
 @app.route("/api/playlist")
 def get_playlist_tracks():
+    if not PLAYLIST_ID:
+        return jsonify({"error": "PLAYLIST_ID not configured"}), 500
     token = get_access_token()
     headers = {"Authorization": f"Bearer {token}"}
     url = f"https://api.spotify.com/v1/playlists/{PLAYLIST_ID}/tracks"
     resp = requests.get(url, headers=headers)
-    resp.raise_for_status()
+
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        return jsonify({"error": "Spotify API error", "details": str(e), "body": resp.text}), 500
+    
     data = resp.json()
 
     tracks_clean = []
-    for item in data["items"]:
-        track = item["track"]
+    for item in data.get("items", []):
+        track = item.get("track")
         if track is None:
             continue
 
-        album_images = track["album"]["images"]
-        image_url = album_images[0]["url"] if album_images else None
+        album = track.get("album", {})
+        images = album.get("images", [])
+        image_url = images[0]["url"] if images else None
 
         tracks_clean.append(
             {
-                "title": track["name"],
-                "artist": ", ".join(a["name"] for a in track["artists"]),
-                "url": track["external_urls"]["spotify"],
+                "title": track.get("name"),
+                "artist": ", ".join(a["name"] for a in track.get("artists", [])),
+                "url": track.get("external_urls", {}).get("spotify"),
                 "album_image": image_url,
             }
         )
 
     return jsonify(tracks_clean)
+
+@app.route("/")
+def index():
+    return send_from_directory("static", "index.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
